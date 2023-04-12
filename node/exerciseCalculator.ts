@@ -30,6 +30,8 @@ const calculateExercises = (array: number[], target: number): Results => {
 				return 'Not bad, keep up the work';
 			case 1:
 				return 'Get it together man, try harder';
+			default:
+				throw new Error('You messed up, silly!');
 		}
 	};
 
