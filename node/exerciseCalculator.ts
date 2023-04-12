@@ -8,7 +8,10 @@ interface Results {
 	ratingDescription: string;
 }
 
-const calculateExercises = (array: number[], target: number): Results => {
+export const calculateExercises = (
+	array: number[],
+	target: number
+): Results => {
 	const periodLength = array.length;
 	const trainingDays = array.filter((day: number) => day !== 0).length;
 	const average = array.reduce(
@@ -45,20 +48,21 @@ const calculateExercises = (array: number[], target: number): Results => {
 		ratingDescription: ratingDescription(rating(average, target)),
 	};
 };
-const [target, array] = [
-	Number(process.argv[2]),
-	process.argv.slice(3).map((day) => Number(day)),
-];
 
-try {
-	if (array.includes(NaN) || typeof target !== 'number') {
-		throw new Error('You should have put in all numbers!');
-	}
-	console.log(calculateExercises(array, target));
-} catch (error: unknown) {
-	let errorMessage = 'Something went wrong: ';
-	if (error instanceof Error) {
-		errorMessage += error.message;
-	}
-	console.log(errorMessage);
-}
+// const [target, array] = [
+// 	Number(process.argv[2]),
+// 	process.argv.slice(3).map((day) => Number(day)),
+// ];
+
+// try {
+// 	if (array.includes(NaN) || typeof target !== 'number') {
+// 		throw new Error('You should have put in all numbers!');
+// 	}
+// 	console.log(calculateExercises(array, target));
+// } catch (error: unknown) {
+// 	let errorMessage = 'Something went wrong: ';
+// 	if (error instanceof Error) {
+// 		errorMessage += error.message;
+// 	}
+// 	console.log(errorMessage);
+// }
