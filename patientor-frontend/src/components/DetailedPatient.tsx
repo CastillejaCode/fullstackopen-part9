@@ -17,6 +17,10 @@ const DetailedPatient = () => {
 		fetchPatient();
 	}, [id]);
 
+	if (!patient.entries) return <div>Still loading</div>;
+
+	console.log(patient);
+
 	return (
 		<div>
 			<h2>{patient.name}</h2>
@@ -26,6 +30,20 @@ const DetailedPatient = () => {
 
 			<p>SSN: {patient.ssn}</p>
 			<p>Occupation: {patient.occupation}</p>
+			<br />
+			<h3>Entries</h3>
+			{patient.entries.map((entry) => {
+				return (
+					<div key={entry.id}>
+						{entry.date}, <em>{entry.description}</em>
+						<ul>
+							{entry.diagnosisCodes?.map((code) => {
+								return <li key={code}>{code}</li>;
+							})}
+						</ul>
+					</div>
+				);
+			})}
 		</div>
 	);
 };
