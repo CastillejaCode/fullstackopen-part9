@@ -1,7 +1,48 @@
 import { useEffect, useState } from 'react';
-import { Patient } from '../types';
+import { Patient, Entry, Diagnosis } from '../types';
 import { useParams } from 'react-router-dom';
 import patientService from '../services/patients';
+import { getAllDiagnoses } from '../services/diagnoses';
+
+const Entries = ({ entries }: { entries: Entry[] }) => {
+	const [diagnoses, setDiagnoses] = useState<Diagnosis[]>([]);
+
+	useEffect(() => {
+		const fetchDiagnoses = async () => {
+			const result = await getAllDiagnoses();
+			setDiagnoses(result);
+		};
+
+		fetchDiagnoses();
+	}, []);
+
+	if (!diagnoses) return <div>Still loading</div>;
+
+	console.log(diagnoses);
+	return (
+		<div>
+			{entries.map((entry) => {
+				return (
+					<div key={entry.id}>
+						{entry.date}, <em>{entry.description}</em>
+						<ul>
+							{entry.diagnosisCodes?.map((code) => {
+								const diagnosisName = diagnoses.find(
+									(diagnosis) => diagnosis.code === code
+								)?.name;
+								return (
+									<li key={code}>
+										{code} {diagnosisName}
+									</li>
+								);
+							})}
+						</ul>
+					</div>
+				);
+			})}
+		</div>
+	);
+};
 
 const DetailedPatient = () => {
 	const id = useParams().id;
@@ -32,18 +73,7 @@ const DetailedPatient = () => {
 			<p>Occupation: {patient.occupation}</p>
 			<br />
 			<h3>Entries</h3>
-			{patient.entries.map((entry) => {
-				return (
-					<div key={entry.id}>
-						{entry.date}, <em>{entry.description}</em>
-						<ul>
-							{entry.diagnosisCodes?.map((code) => {
-								return <li key={code}>{code}</li>;
-							})}
-						</ul>
-					</div>
-				);
-			})}
+			<Entries entries={patient.entries} />
 		</div>
 	);
 };
