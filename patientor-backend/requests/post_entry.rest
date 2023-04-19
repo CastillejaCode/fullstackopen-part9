@@ -1,0 +1,13 @@
+POST http://localhost:3001/api/patients/d2773336-f723-11e9-8f0b-362b9e155667/entries
+Content-Type: application/json
+
+{
+    "date": "2015-02-02",
+    "description": "Patient came back stating thumb got stuck in fence.",
+    "specialist": "MD House",
+    "discharge": {
+        "date": "2015-02-02",
+        "criteria": "Applied lotion to remove thumb from fence he brought with him"
+    },
+    "type":"Hospital"
+}

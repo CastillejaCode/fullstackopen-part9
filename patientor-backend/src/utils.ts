@@ -1,4 +1,4 @@
-import { NewPatient, Gender } from './types';
+import { NewPatient, Gender, EntryWithoutId, BaseEntry } from './types';
 
 const isString = (text: unknown): text is string => {
 	return typeof text === 'string' || text instanceof String;
@@ -10,6 +10,13 @@ const parseString = (name: unknown): string => {
 	}
 
 	return name;
+};
+
+const parseNumber = (number: unknown): number => {
+	if (!number || typeof number !== 'number') {
+		throw new Error('Incorrect number');
+	}
+	return number;
 };
 
 const isDate = (date: string): boolean => {
@@ -38,7 +45,7 @@ const parseGender = (gender: unknown): Gender => {
 	return gender;
 };
 
-const toNewPatientEntry = (entry: unknown): NewPatient => {
+export const toNewPatientEntry = (entry: unknown): NewPatient => {
 	if (!entry || typeof entry !== 'object') {
 		throw new Error('Missing data');
 	}
@@ -55,6 +62,7 @@ const toNewPatientEntry = (entry: unknown): NewPatient => {
 			ssn: parseString(entry.ssn),
 			occupation: parseString(entry.occupation),
 			gender: parseGender(entry.gender),
+			entries: [],
 		};
 
 		return newEntry;
@@ -63,4 +71,55 @@ const toNewPatientEntry = (entry: unknown): NewPatient => {
 	throw new Error('Some fields are missin, oopsie!');
 };
 
-export default toNewPatientEntry;
+export const toNewEntry = (entry: unknown): EntryWithoutId => {
+	if (!entry || typeof entry !== 'object') {
+		throw new Error('Missing data');
+	}
+
+	if (
+		'date' in entry &&
+		'description' in entry &&
+		'specialist' in entry &&
+		'type' in entry
+	) {
+		const newEntry: Omit<BaseEntry, 'id'> = {
+			date: parseDate(entry.date),
+			description: parseString(entry.description),
+			specialist: parseString(entry.specialist),
+		};
+
+		if (entry.type === 'HealthCheck' && 'healthCheckRating' in entry)
+			return {
+				...newEntry,
+				healthCheckRating: parseNumber(entry.healthCheckRating),
+				type: entry.type,
+			};
+
+		if (entry.type === 'Hospital' && 'discharge' in entry) {
+			if (!entry.discharge || typeof entry.discharge !== 'object') {
+				throw new Error('Missing data');
+			}
+
+			if ('date' in entry.discharge && 'criteria' in entry.discharge) {
+				return {
+					...newEntry,
+					type: entry.type,
+					discharge: {
+						date: parseString(entry.discharge.date),
+						criteria: parseString(entry.discharge.criteria),
+					},
+				};
+			}
+		}
+
+		if (entry.type === 'OccupationalHealthcare' && 'employerName' in entry) {
+			return {
+				...newEntry,
+				type: entry.type,
+				employerName: parseString(entry.employerName),
+			};
+		}
+	}
+
+	throw new Error('You missed some fields there, pal');
+};
