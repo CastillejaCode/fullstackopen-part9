@@ -37,7 +37,8 @@ const addEntry = (entry: EntryWithoutId, id: string): Entry => {
 		id: uuid(),
 		...entry,
 	};
-	patientsData.find((patient) => patient.id === id)?.entries.push(newEntry);
+	const patient = patientsData.find((patient) => patient.id === id);
+	patient?.entries.push(newEntry);
 	return newEntry;
 };
 

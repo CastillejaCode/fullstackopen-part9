@@ -6,15 +6,15 @@ const isString = (text: unknown): text is string => {
 
 const parseString = (name: unknown): string => {
 	if (!name || !isString(name)) {
-		throw new Error('Incorrect name format');
+		throw new Error('Incorrect string format');
 	}
 
 	return name;
 };
 
 const parseNumber = (number: unknown): number => {
-	if (!number || typeof number !== 'number') {
-		throw new Error('Incorrect number');
+	if (typeof number !== 'number') {
+		throw new Error('Incorrect number format');
 	}
 	return number;
 };
