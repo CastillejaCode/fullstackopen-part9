@@ -16,11 +16,13 @@ const DetailedPatient = () => {
 			const newPatient = await patientService.getPatient(id);
 			setPatient(newPatient);
 		})();
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, []);
 
 	const handleSubmit = async (entry: EntryWithoutId, id: string) => {
 		try {
 			const result = await patientService.createEntry(entry, id);
+			console.log(result);
 			setPatient({ ...patient, entries: [...patient.entries, result] });
 		} catch (error: unknown) {
 			if (axios.isAxiosError(error)) {

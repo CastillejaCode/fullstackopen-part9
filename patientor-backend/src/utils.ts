@@ -1,4 +1,10 @@
-import { NewPatient, Gender, EntryWithoutId, BaseEntry } from './types';
+import {
+	NewPatient,
+	Gender,
+	EntryWithoutId,
+	BaseEntry,
+	Diagnosis,
+} from './types';
 
 const isString = (text: unknown): text is string => {
 	return typeof text === 'string' || text instanceof String;
@@ -45,6 +51,15 @@ const parseGender = (gender: unknown): Gender => {
 	return gender;
 };
 
+// const parseDiagnosisCodes = (object: unknown): Array<Diagnosis['code']> => {
+// 	if (!object || typeof object !== 'object' || !('diagnosisCodes' in object)) {
+// 		// we will just trust the data to be in correct form
+// 		return [] as Array<Diagnosis['code']>;
+// 	}
+
+// 	return object.diagnosisCodes as Array<Diagnosis['code']>;
+// };
+
 export const toNewPatientEntry = (entry: unknown): NewPatient => {
 	if (!entry || typeof entry !== 'object') {
 		throw new Error('Missing data');
@@ -80,12 +95,14 @@ export const toNewEntry = (entry: unknown): EntryWithoutId => {
 		'date' in entry &&
 		'description' in entry &&
 		'specialist' in entry &&
-		'type' in entry
+		'type' in entry &&
+		'diagnosisCodes' in entry
 	) {
 		const newEntry: Omit<BaseEntry, 'id'> = {
 			date: parseDate(entry.date),
 			description: parseString(entry.description),
 			specialist: parseString(entry.specialist),
+			diagnosisCodes: entry.diagnosisCodes as Array<Diagnosis['code']>,
 		};
 
 		if (entry.type === 'HealthCheck' && 'healthCheckRating' in entry)
@@ -105,7 +122,7 @@ export const toNewEntry = (entry: unknown): EntryWithoutId => {
 					...newEntry,
 					type: entry.type,
 					discharge: {
-						date: parseString(entry.discharge.date),
+						date: parseDate(entry.discharge.date),
 						criteria: parseString(entry.discharge.criteria),
 					},
 				};
@@ -113,11 +130,32 @@ export const toNewEntry = (entry: unknown): EntryWithoutId => {
 		}
 
 		if (entry.type === 'OccupationalHealthcare' && 'employerName' in entry) {
-			return {
-				...newEntry,
-				type: entry.type,
-				employerName: parseString(entry.employerName),
-			};
+			if ('sickLeave' in entry) {
+				if (!entry.sickLeave || typeof entry.sickLeave !== 'object') {
+					throw new Error('Missing data');
+				}
+				if ('startDate' in entry.sickLeave && 'endDate' in entry.sickLeave) {
+					if (!entry.sickLeave.startDate || !entry.sickLeave.endDate) {
+						return {
+							...newEntry,
+							type: entry.type,
+							employerName: parseString(entry.employerName),
+						};
+					}
+					return {
+						...newEntry,
+						type: entry.type,
+						employerName: parseString(entry.employerName),
+						sickLeave: {
+							startDate: parseDate(entry.sickLeave.startDate),
+							endDate: parseDate(entry.sickLeave.endDate),
+						},
+					};
+				}
+			}
+			throw new Error(
+				'Incorrect data formatting within OccupationalHealthcare'
+			);
 		}
 	}
 

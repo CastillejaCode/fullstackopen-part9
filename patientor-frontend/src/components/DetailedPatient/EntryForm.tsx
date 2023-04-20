@@ -1,5 +1,7 @@
-import { useState } from 'react';
-import { EntryWithoutId } from '../../types';
+import { useEffect, useState } from 'react';
+import { Diagnosis, EntryWithoutId } from '../../types';
+import { getAllDiagnoses } from '../../services/diagnoses';
+import MultipleSelect from './MultipleSelect';
 
 interface Props {
 	handleSubmit: (entry: EntryWithoutId, id: string) => void;
@@ -8,6 +10,18 @@ interface Props {
 
 const EntryForm = ({ handleSubmit, id }: Props) => {
 	const [formType, setFormType] = useState<string>('HealthCheck');
+	const [allCodes, setAllCodes] = useState<Diagnosis['code'][]>([]);
+	const [codes, setCodes] = useState<Diagnosis['code'][]>([]);
+
+	useEffect(() => {
+		const fetchCodes = async () => {
+			const codes = await getAllDiagnoses();
+			const newCodes = codes.map((diagnosis: Diagnosis) => diagnosis.code);
+			setAllCodes(newCodes);
+		};
+
+		fetchCodes();
+	}, []);
 
 	const submitEntry = async (event: React.SyntheticEvent) => {
 		event.preventDefault();
@@ -15,56 +29,78 @@ const EntryForm = ({ handleSubmit, id }: Props) => {
 			description: { value: string };
 			date: { value: string };
 			specialist: { value: string };
-			diagnoses: { value: string };
 			dischargeDate: { value: string };
 			dischargeCriteria: { value: string };
 			rating: { value: string };
 			employer: { value: string };
-			sickStart: { value: Date };
-			sickEnd: { value: Date };
+			sickStart: { value: string };
+			sickEnd: { value: string };
 		};
 		const description = target.description.value;
 		const date = target.date.value;
 		const specialist = target.specialist.value;
-		const diagnoses = target.diagnoses.value;
 
-		let newEntry = {
+		const newEntry = {
 			description,
 			date,
 			specialist,
-			diagnoses,
+			diagnosisCodes: codes,
 		};
 
-		if (formType === 'Hospital') {
-			handleSubmit(
-				{
-					...newEntry,
-					type: formType,
-					discharge: {
-						date: target.dischargeDate.value,
-						criteria: target.dischargeCriteria.value,
+		switch (formType) {
+			case 'HealthCheck':
+				handleSubmit(
+					{
+						...newEntry,
+						type: formType,
+						healthCheckRating: Number(target.rating.value),
 					},
-				},
-				id
-			);
+					id
+				);
+				break;
+			case 'Hospital':
+				handleSubmit(
+					{
+						...newEntry,
+						type: formType,
+						discharge: {
+							date: target.dischargeDate.value,
+							criteria: target.dischargeCriteria.value,
+						},
+					},
+					id
+				);
+				break;
+			case 'OccupationalHealthcare':
+				handleSubmit(
+					{
+						...newEntry,
+						type: formType,
+						employerName: target.employer.value,
+						sickLeave: {
+							startDate: target.sickStart.value,
+							endDate: target.sickEnd.value,
+						},
+					},
+					id
+				);
+				break;
+			default:
+				throw new Error('Some input did not work out!');
 		}
-		if (formType === 'HealthCheck') {
-			handleSubmit(
-				{
-					...newEntry,
-					type: formType,
-					healthCheckRating: Number(target.rating.value),
-				},
-				id
-			);
-		}
+
+		target.date.value = '';
+		target.description.value = '';
+		target.specialist.value = '';
+		target.dischargeDate.value = '';
+		target.dischargeCriteria.value = '';
 	};
 
 	const HealthCheckForm = () => {
 		return (
 			<label htmlFor=''>
 				HealthCheck Rating
-				<input type='number' name='rating' />
+				<input type='number' name='rating' defaultValue={0} min={0} max={3} />
 			</label>
 		);
 	};
@@ -74,11 +110,11 @@ const EntryForm = ({ handleSubmit, id }: Props) => {
 			<>
 				<label htmlFor=''>
 					Discharge Date
-					<input type='date' name='dischargeDate' />
+					<input type='date' name='dischargeDate' required />
 				</label>
 				<label htmlFor=''>
 					Discharge Criteria
-					<input type='text' name='dischargeCriteria' />
+					<input type='text' name='dischargeCriteria' required />
 				</label>
 			</>
 		);
@@ -118,7 +154,7 @@ const EntryForm = ({ handleSubmit, id }: Props) => {
 				style={{ display: 'flex', flexDirection: 'column' }}>
 				<label htmlFor=''>
 					Description
-					<input type='text' name='description' />
+					<input type='text' name='description' required />
 				</label>
 				<label htmlFor=''>
 					Date
@@ -131,11 +167,14 @@ const EntryForm = ({ handleSubmit, id }: Props) => {
 				{formType === 'HealthCheck' && HealthCheckForm()}
 				{formType === 'Hospital' && HospitalForm()}
 				{formType === 'OccupationalHealthcare' && OccupationalForm()}
-				<label htmlFor=''>
+				{/* <label htmlFor=''>
 					Diagnosis Codes
 					<input type='text' name='diagnoses' />
-				</label>
-				<button type='submit'>Submit</button>
+				</label> */}
+				<MultipleSelect allCodes={allCodes} setCodes={setCodes} codes={codes} />
+				<button type='submit' style={{ width: 'fit-content' }}>
+					Submit
+				</button>
 			</form>
 		</div>
 	);
